@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}
+        Movie reviews
+        {% endblock %}</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <style>
+          {% comment %} .scrollable-container {
+            max-height: 400px; /* Adjust the height as needed */
+            overflow-y: auto; /* Enable vertical scrolling */
+            padding-right: 2px; /* Add some padding for the scrollbar */
+            margin: 0 auto;
+            width: 100%;
+            border-radius: 10px;
+        } {% endcomment %}
+            .navbar-brand {
+                font-family: "Pacifico", cursive;
+                font-weight: 400;
+                font-style: normal;
+                color: #FFED28 !important; /* Neon yellow color */
+                font-size: 2rem; /* Larger font size for the brand */
+                text-shadow: 
+                  0 0 5px rgba(255, 237, 40, 0.7),
+                  0 0 10px rgba(255, 237, 40, 0.7),
+                  0 0 20px rgba(255, 237, 40, 0.7),
+                  0 0 40px rgba(255, 237, 40, 0.7),
+                  0 0 80px rgba(255, 237, 40, 1); /* Multi-layered glow for a neon effect */
+                animation: glow 1.5s infinite alternate;
+              }
+              
+              /* Keyframe animation for pulsating neon glow */
+              @keyframes glow {
+                0% {
+                  text-shadow: 
+                    0 0 5px rgba(255, 237, 40, 0.7),
+                    0 0 10px rgba(255, 237, 40, 0.7),
+                    0 0 20px rgba(255, 237, 40, 0.7),
+                    0 0 40px rgba(255, 237, 40, 0.7),
+                    0 0 80px rgba(255, 237, 40, 1);
+                }
+                100% {
+                  text-shadow: 
+                    0 0 10px rgba(255, 237, 40, 1),
+                    0 0 20px rgba(255, 237, 40, 1),
+                    0 0 30px rgba(255, 237, 40, 1),
+                    0 0 50px rgba(255, 237, 40, 1),
+                    0 0 100px rgba(255, 237, 40, 1);
+                }
+              }
+              
+            /* Neon background and text effects */
+            .navbar {
+              background-color: #000000; /* Dark background */
+              box-shadow: 0 0 15px 5px rgba(255, 237, 40, 0.5); /* Neon glow around navbar */
+            }
+            .navbar.bg-body-tertiary {
+                background-color: #000000 !important; /* Set background to black */
+              }              
+            .navbar-brand, .nav-link {
+              color:  #FFED28 !important; /* Neon yellow text */
+              text-shadow: 0 0 5px rgba(255, 237, 40, 0.7), 0 0 10px rgba(0, 255, 255, 0.5); /* Neon glow for text */
+            }
+            .navbar-toggler {
+              box-shadow: 0 0 5px rgba(255, 237, 40, 0.7); /* Neon button glow */
+            }
+            .navbar-toggler-icon {
+              filter: drop-shadow(0 0 5px rgba(255, 237, 40, 0.7)); /* Neon shadow for the toggle icon */
+            }
+            .form-control {
+              background-color: #00000;
+              color: black;
+              border: none;
+              box-shadow: 0 0 5px rgba(255, 237, 40, 0.7);
+            }
+            .btn-outline-success {
+              color:  #FFED28;
+              border-color:  #FFED28;
+              box-shadow: 0 0 10px rgba(255, 237, 40, 0.5);
+            }
+            .btn-outline-success:hover {
+              background-color:  #FFED28;
+              color: black;
+              box-shadow: 0 0 20px rgba(255, 237, 40, 1);
+              border-color:  #FFED28;
+            }
+            html, body {
+                height: 100%; /* Ensure html and body take full height */
+                margin: 0; /* Remove default margin */
+            }
+            html {
+                position: relative; /* Needed for the overlay */
+                color: #000000;
+                overflow: hidden; /* To prevent overflow of the pseudo-element */
+              }
+              body {
+                background-color: black; /* Set background color to black */
+                overflow-y : auto;
+            }
+          
+              /* Background image with reduced opacity */
+              body::before {
+                content: ""; /* Pseudo-element for overlay */
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: url("{% get_media_prefix %}back1.jpg") no-repeat center center fixed; /* Replace with your image URL */
+                background-size: cover;
+                opacity: 0.8; /* Set the opacity here */
+                z-index: -1; /* Ensure it stays behind the content */
+              }
+              body::after {
+                content: ""; /* Pseudo-element for dark overlay */
+                position: fixed; /* Fixed positioning to cover the viewport */
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5); /* Black overlay with opacity */
+                z-index: -1; /* Ensure it stays behind the content */
+            }
+          </style>
+</head>
+<body >
+  <nav class="navbar navbar-expand-lg bg-body-tertiary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Cinesense</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="{%url 'review_list' %}">Home</a>
+          </li>
+          {% comment %} <li class="nav-item">
+            <a class="nav-link" href="#">Link</a>
+            </li> {% endcomment %}
+            {% comment %} <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Dropdown
+                </a>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="#">Action</a></li>
+                  <li><a class="dropdown-item" href="#">Another action</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" href="#">Something else here</a></li>
+                  </ul>
+                  </li> {% endcomment %}
+                  <li class="nav-item">
+                    {% if user.is_authenticated %}
+                    <form action="{% url 'logout' %}" method="post">
+                      <button class="nav-link"  type = "submit">Logout</button>
+                      {% csrf_token %}
+                    </form>
+                    {% else %}
+                    <a href="{% url "login" %}" class = "nav-link">Login</a>
+                    {% endif %}
+                  </li>
+                </ul>
+                {% block search %}
+                <form method = "GET" class="d-flex" action = "" role="search">
+                  <input class="form-control me-2" type="search"  placeholder="Search by movie name" name = "q" aria-label="Search">
+              <button class="btn btn-outline-success" type="submit">Search</button>
+            </form>
+            {% endblock %}
+          </div>
+        </div>
+      </nav>
+      <div class="scrollable-container">
+        {% block content %}
+        {% endblock %}
+      </div>
+    </body>
+    </html>

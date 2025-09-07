@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+{% block title %}
+Movie review
+{% endblock %}
+
+{% block content %}
+<h1 class="text-center neon-text mt-4">Are you sure that you want to delete?</h1>
+<form method="POST" class="confirmation-form">
+    {% csrf_token %}
+    <button class="btn-neon-danger" type="submit">Delete</button>
+    <a href="{% url 'review_list' %}" class="btn-neon-safe">Cancel</a>
+</form>
+<style>
+    /* Neon glowing text for header */
+    .neon-text {
+        font-size: 2rem;
+        color: #fff;
+        text-shadow: 
+            0 0 5px #FFED28,
+            0 0 10px #FFED28,
+            0 0 20px #FFED28,
+            0 0 40px #FFED28,
+            0 0 80px #FFED28,
+            0 0 90px #FFED28;
+    }
+
+    /* Centered form */
+    .confirmation-form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    /* Neon red delete button */
+    .btn-neon-danger {
+        background-color: #ff1a1a; /* Neon red */
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 10px;
+        cursor: pointer;
+        box-shadow: 
+            0 0 5px #ff1a1a,
+            0 0 20px #ff1a1a,
+            0 0 30px #ff1a1a,
+            0 0 50px #ff3333;
+        transition: 0.3s;
+    }
+
+    .btn-neon-danger:hover {
+        box-shadow: 
+            0 0 10px #ff1a1a,
+            0 0 40px #ff1a1a,
+            0 0 60px #ff1a1a;
+        transform: scale(1.1);
+    }
+
+    /* Neon green cancel button */
+    .btn-neon-safe {
+        background-color: #00e600; /* Neon green */
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 10px;
+        cursor: pointer;
+        box-shadow: 
+            0 0 5px #00e600,
+            0 0 20px #00e600,
+            0 0 30px #00e600,
+            0 0 50px #66ff66;
+        transition: 0.3s;
+    }
+
+    .btn-neon-safe:hover {
+        box-shadow: 
+            0 0 10px #00e600,
+            0 0 40px #00e600,
+            0 0 60px #00e600;
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}
+

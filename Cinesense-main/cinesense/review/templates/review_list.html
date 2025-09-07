@@ -1,0 +1,125 @@
+{% extends "layout.html" %}
+{% block title %}
+Movie review
+{% endblock %}
+{% block search %}
+<form method="GET" action="" class=" d-flex">
+    <input type="text" name="q" class="form-control" placeholder="Search by movie name" aria-label="Search" aria-describedby="search-btn">
+    <button class="btn neon-btn-info" type="submit" id="search-btn">Search</button>
+</form>
+{% endblock %}
+{% block content %}
+<h1 class=" card-title text-center text-white mt-4">"A PICTURE IS WORTH A THOUSAND WORDS"</h1>
+
+<a class = "btn neon-btn-info mb-4" href="{% url 'review_create'%}">Create a review</a>
+<div class = "container row gap-3">
+    {% for review in reviews %}
+    <div class="card neon-card" style="width: 18rem;">
+        <img src="{{review.photo.url}}" class="card-img-top" alt="...">
+        <div class="card-body">
+          <h5 class="card-title">{{review.movie_name}}</h5>
+          <p class="card-text">{{review.user.username}} - {{review.text}}</p>
+          {% if user.is_authenticated %}
+          <a class = "mr-4 btn neon-btn-info " href="{% url 'review_analyse' review.id %}" >Analyze</a>
+          {% endif %}
+          {% if review.user == user %}
+          <a class = "ml-4 btn neon-btn-primary " href="{% url 'review_edit' review.id %}" >Edit</a>
+          <a class = "btn neon-btn-danger " href="{% url 'review_delete' review.id %}">Delete</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+
+</div>
+<style>
+  {% comment %} body {
+      background-color: #FFD700; /* Golden-yellow background */
+  } {% endcomment %}
+  .card{
+    background-color: rgba(0, 0, 0, 1); /* black background for card body */
+  }
+  .neon-card {
+      margin: 5px 3px 3px 15px;
+      border: 2px solid #FFED28; /* Neon golden border */
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(255, 237, 40, 0.5), 0 0 20px rgba(255, 237, 40, 0.5), 0 0 30px rgba(255, 237, 40, 0.5);
+      transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .neon-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255, 237, 40, 1), 0 0 30px rgba(255, 237, 40, 1), 0 0 40px rgba(255, 237, 40, 1);
+  }
+
+  .card-body {
+      background-color: rgba(0, 0, 0, 1); /* black background for card body */
+      border-radius: 10px;
+      padding: 15px;
+      position: relative;
+  }
+
+  .card-title {
+      color: #FFED28; /* Neon orange color for title */
+      text-shadow: 0 0 5px #FFED28, 0 0 10px #FFED28;
+  }
+
+  .card-text {
+      color: #fff; /* Black text for contrast */
+      text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  }
+
+  .btn {
+      margin-top: 5px;
+      margin: 5px 5px;
+      background-color: transparent; /* Transparent background */
+      padding: 10px 20px;
+      border-radius: 5px;
+      {% comment %} border: 1px solid #1C4FDB; /* border */ {% endcomment %}
+      text-transform: uppercase;
+      font-weight: bold;
+      transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  }
+  .neon-btn-primary {
+    border: 2px solid #1C4FDB; /* Neon BLUE border */
+    color: #1C4FDB; /* Neon BLUE text */
+    text-shadow: 0 0 5px #1C4FDB, 0 0 10px #1C4FDB; /* Neon glow effect */
+}
+
+.neon-btn-primary:hover {
+    background-color: #1C4FDB; /* Neon BLUE background on hover */
+    color: #000; /* Black text on hover */
+    box-shadow: 0 0 10px #1C4FDB, 0 0 20px #1C4FDB; /* Enhanced glow effect on hover */
+}
+  .neon-btn-info {
+    border: 2px solid #11D9DB; /* Neon BLUE border */
+    color: #11D9DB; /* Neon BLUE text */
+    text-shadow: 0 0 5px #11D9DB, 0 0 10px #11D9DB; /* Neon glow effect */
+}
+
+.neon-btn-info:hover {
+    background-color: #11D9DB; /* Neon BLUE background on hover */
+    color: #000; /* Black text on hover */
+    box-shadow: 0 0 10px #11D9DB, 0 0 20px #11D9DB; /* Enhanced glow effect on hover */
+}
+  .neon-btn-danger {
+    border: 2px solid #DB2F00; /* Neon BLUE border */
+    color: #DB2F00; /* Neon RED text */
+    text-shadow: 0 0 5px #DB2F00, 0 0 10px #DB2F00; /* Neon glow effect */
+}
+
+.neon-btn-danger:hover {
+    background-color: #DB2F00; /* Neon RED background on hover */
+    color: #000; /* Black text on hover */
+    box-shadow: 0 0 10px #DB2F00, 0 0 20px #DB2F00; /* Enhanced glow effect on hover */
+}
+
+.btn{
+    margin-top: 5px;
+    outline: none; /* Remove outline */
+}
+</style>
+
+
+
+
+{% endblock %}

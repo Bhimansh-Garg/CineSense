@@ -1,0 +1,118 @@
+{% extends "layout.html" %}
+{% block title %}
+Movie Review Analysis
+{% endblock %}
+
+{% block content %}
+<h1 class="text-center glowing-title mt-4">"A PICTURE IS WORTH A THOUSAND WORDS"</h1>
+
+<!-- Review Card with a smaller review photo and a black overlay background -->
+<div class="card neon-card mb-4">
+    <div class="card-body d-flex flex-row align-items-center">
+        <!-- Smaller review photo -->
+        <div class="small-photo-container me-3">
+            <img src="{{ review.photo.url }}" class="img-fluid small-photo" alt="Review Image">
+        </div>
+        <div class="text-container">
+            <h5 class="glowing-card-title">Review Sentiment</h5>
+            <p class="card-text glowing-username">Reviewed by: {{ review.user.username }}</p>
+            <p class="card-text glowing-text">{{ review.text }}</p>
+            <p class="card-text glowing-sentiment" style="color: {{ sentiment_color }};">Sentiment: {{ sentiment }}</p>
+            <p class="card-text last-updated-text">Last updated 3 mins ago</p>
+        </div>
+    </div>
+</div>
+<div class="text-center mb-4">
+  <a href="{% url 'review_list' %}" class="btn neon-button">Go Back to Reviews</a>
+</div>
+<!-- Custom CSS for styling -->
+<style>
+    body {
+        background-color: #111; /* Dark background */
+        color: #FFED28; /* Golden text color */
+        font-family: 'Arial', sans-serif;
+    }
+
+    .glowing-title {
+        color: #FFED28; /* Neon gold */
+        text-shadow: 0 0 10px #FFED28, 0 0 20px #FFED28, 0 0 30px #FFC107, 0 0 40px #FFC107;
+        font-size: 3rem;
+        font-weight: bold;
+    }
+
+    .neon-card {
+        background-color: rgba(0, 0, 0, 0.7); /* Transparent black background */
+        border: 2px solid #FFED28; /* Neon gold border */
+        border-radius: 15px;
+        box-shadow: 0 0 20px #FFED28, 0 0 40px #FFC107;
+    }
+
+    /* Container for the smaller photo */
+    .small-photo-container {
+        max-width: 120px; /* Adjust the width as per your requirement */
+    }
+
+    .small-photo {
+        width: 100%; /* Make the image responsive */
+        border-radius: 10px;
+    }
+
+    .text-container {
+        flex-grow: 1;
+    }
+
+    .glowing-card-title {
+        color: #FFED28;
+        font-size: 1.8rem;
+        text-shadow: 0 0 10px #FFED28, 0 0 20px #FFED28;
+    }
+
+    .glowing-text {
+        font-size: 1.2rem;
+        color: #FFF;
+        text-shadow: 0 0 5px #FFF, 0 0 10px #FFED28;
+        margin-bottom: 1rem;
+    }
+
+    /* New glowing effect for the username */
+    .glowing-username {
+        font-size: 1.1rem;
+        color: #FFED28;
+        text-shadow: 0 0 5px #FFED28, 0 0 10px #FFC107;
+        margin-bottom: 1rem;
+    }
+
+    .glowing-sentiment {
+        font-size: 1.5rem;
+        text-shadow: 0 0 5px {{ sentiment_color }}, 0 0 10px {{ sentiment_color }};
+        font-weight: bold;
+    }
+    .neon-button {
+      padding: 10px 20px;
+      border-radius: 5px;
+      background-color: transparent; /* Neon gold */
+      color: #FFED28;
+      text-shadow: 0 0 10px #FFED28, 0 0 20px #FFC107;
+      text-transform: uppercase;
+      font-size: 1rem;
+      font-weight: bold;
+      box-shadow: 0 0 10px #FFED28, 0 0 20px #FFC107;
+      transition: 0.3s;
+      text-decoration: none;
+  }
+
+  .neon-button:hover {
+      background-color: #FFC107;
+      box-shadow: 0 0 20px #FFC107, 0 0 30px #FFED28;
+  }
+
+    .last-updated-text {
+        font-size: 0.9rem;
+        color: white; /* White text for 'Last updated' */
+    }
+
+    .card-text small {
+        color: #FFF; /* White text for small text */
+    }
+</style>
+{% endblock %}

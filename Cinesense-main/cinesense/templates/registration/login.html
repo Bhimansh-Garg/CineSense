@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+
+
+{% block content %}
+<form class="mt-5 neon-form" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% for field in form %}
+        <label class="neon-label">{{ field.label }}</label>
+        {{ field }}
+    {% endfor %}
+    <button class="btn neon-btn-warning" type="submit">Login</button>
+</form>
+<p class=" mr-4 neon-label">Don't have an account? Please <a  class="btn neon-btn-warning" href="{% url 'register'%}">Register</a> </p>
+
+<style>
+    body {
+        background-color: #FFD700; /* Golden-yellow background */
+        overflow-y: auto;
+    }
+
+    .neon-heading {
+        color: #FF4500; /* Neon orange */
+        text-align: center;
+        text-shadow: 0 0 5px #FF4500, 0 0 10px #FF4500;
+        margin-bottom: 20px;
+    }
+    .neon-form { 
+        background-color: rgba(255, 255, 255, 0.1); /* Light transparent background */
+        padding: 20px;
+        border-radius: 10px;
+        border: 2px solid #00FF00; /* Neon green border */
+        box-shadow: 0 0 10px rgba(0, 255, 0, 0.5), 0 0 20px rgba(0, 255, 0, 0.5);
+        margin: 0 auto;
+        width: 50%;
+    }
+
+    .neon-form input, .neon-form textarea, .neon-form select {
+        background-color: transparent; /* Transparent background */
+        border: 2px solid #00FF00; /* Neon green border */
+        color: #00FF00; /* Neon green text */
+        padding: 10px;
+        border-radius: 5px;
+        width: 100%;
+        margin-bottom: 15px;
+        box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        outline: none;
+        font-size: 16px;
+        text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        transition: all 0.3s ease;
+    }
+    .neon-label {
+        color: #00FF00; /* Neon green color for labels */
+        font-size: 18px; /* Font size for labels */
+        font-weight: bold; /* Make labels bold */
+        text-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 1); /* Neon effect */
+        margin-bottom: 5px; /* Space between label and field */
+    }
+
+    .neon-form input:focus, .neon-form textarea:focus, .neon-form select:focus {
+        box-shadow: 0 0 15px rgba(0, 255, 0, 1);
+    }
+
+    /* Button Styles */
+    .neon-btn-warning {
+        background-color: transparent; /* Transparent background */
+        border: 2px solid #FF4500; /* Neon orange border */
+        color: #FF4500; /* Neon orange text */
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-transform: uppercase;
+        font-weight: bold;
+        text-shadow: 0 0 5px #FF4500, 0 0 10px #FF4500;
+        transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+    }
+
+    .neon-btn-warning:hover {
+        background-color: #FF4500; /* Neon orange background on hover */
+        color: #000; /* Black text on hover */
+        box-shadow: 0 0 10px #FF4500, 0 0 20px #FF4500;
+    }
+
+    .neon-btn-back {
+        background-color: transparent; /* Transparent background */
+        border: 2px solid #00FF00; /* Neon green border */
+        color: #00FF00; /* Neon green text */
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-transform: uppercase;
+        font-weight: bold;
+        text-shadow: 0 0 5px #00FF00, 0 0 10px #00FF00;
+        transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+        display: inline-block;
+        margin-top: 10px;
+    }
+
+    .neon-btn-back:hover {
+        background-color: #00FF00; /* Neon green background on hover */
+        color: #000; /* Black text on hover */
+        box-shadow: 0 0 10px #00FF00, 0 0 20px #00FF00;
+    }
+</style>
+{% endblock %}
