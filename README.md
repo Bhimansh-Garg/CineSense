@@ -52,6 +52,7 @@ python manage.py runserver
 ```
 Open 👉 http://127.0.0.1:8000/
  in your browser.
+
  
 ## 📂 Project Structure
 ```bash
@@ -71,9 +72,6 @@ cinesense/             # Main Django project folder
 └── README.md          # Documentation
 ```
 
-## 🖥️ Usage
-1. Run the server:
-   ```bash
-   python manage.py runserver
-   ```
-   
+## 🧑‍💻 Credits
+- Original author: AlakhSimar Singh 
+- Modified & maintained by: Bhimansh Garg
