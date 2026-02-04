@@ -72,6 +72,4 @@ cinesense/             # Main Django project folder
 └── README.md          # Documentation
 ```
 
-## 🧑‍💻 Credits
-- Original author: AlakhSimar Singh 
-- Modified & maintained by: Bhimansh Garg
+
