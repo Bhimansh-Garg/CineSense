@@ -1,0 +1,14 @@
+# Local environment / secrets — never commit real keys
+.env
+**/.env
+!.env.example
+
+# Python bytecode (can embed previously hardcoded secrets)
+__pycache__/
+**/__pycache__/
+*.py[cod]
+
+# Local SQLite DB (sessions/cookies after key rotation)
+*.sqlite3
+db.sqlite3
+**/db.sqlite3

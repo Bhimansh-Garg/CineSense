@@ -1,75 +1,43 @@
-# CineSense 🎬
+# CineSense
 
-CineSense is a **Django-based web application** for analyzing and managing movie reviews.  
-It includes a pre-trained sentiment analysis model (stored in `review/models/`) and a simple UI for interacting with reviews.
+## Setup (secrets)
 
----
+Django requires `DJANGO_SECRET_KEY` in every environment. It is never committed.
 
-## ✨ Features
-- Submit and analyze movie reviews.
-- Built with **Django 5.x**.
-- Uses pre-trained ML models (included in repo).
-- Includes Jupyter Notebook (`main.ipynb`) for experimentation and model training.
-- SQLite database (`db.sqlite3`) for local storage.
+1. From the `cinesense` app directory:
 
----
-
-## 🛠 Tech Stack
-- **Backend**: Django 5.x (Python 3.12+)
-- **Frontend**: Django Templates, HTML, CSS
-- **Database**: SQLite (default)
-- **Other**: Pillow (for image handling)
-
----
-
-## 🚀 Getting Started
-
-### 1. Clone the repository
 ```bash
-git clone https://github.com/Bhimansh-Garg/CineSense.git
-cd CineSense
-```
-## Create and activate a virtual environment
-```bash
-python -m venv venv
-# Windows
-venv\Scripts\activate
-# Linux/Mac
-source venv/bin/activate
-```
-## Install Dependencies
-```bash
-pip install -r requirements.txt
-```
-## Apply Migrations
-```bash
-python manage.py migrate
+python bootstrap_env.py
 ```
 
-## Run the Server
-```bash
-python manage.py runserver
-```
-Open 👉 http://127.0.0.1:8000/
- in your browser.
+Or copy the example and set the key yourself:
 
- 
-## 📂 Project Structure
 ```bash
-cinesense/             # Main Django project folder
-│   manage.py          # Django CLI
-│   db.sqlite3         # SQLite database (auto-created)
-│   requirement.txt    # Project dependencies
-│
-├── cinesense/         # Django settings & URLs
-├── review/            # Review app (with ML model integration)
-│   ├── models/        # Pre-trained model + tokenizer
-│   ├── templates/     # HTML templates
-│   └── ...
-├── media/             # Uploaded images
-├── imdb-dataset.../   # Dataset (optional, only for retraining)
-├── main.ipynb         # Notebook for ML training experiments
-└── README.md          # Documentation
+cp .env.example .env
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
 
+Put the generated value in `.env` as `DJANGO_SECRET_KEY=...`.
 
+For local development, set `DJANGO_DEBUG=True` in `.env` (included when using `bootstrap_env.py`). If `DJANGO_DEBUG` is unset, Django runs with `DEBUG=False`.
+
+`DJANGO_ALLOWED_HOSTS` is a comma-separated list (default `localhost,127.0.0.1` when unset).
+
+2. Run the app as usual (`python manage.py runserver`, etc.).
+
+## Deployment
+
+Set a **new** `DJANGO_SECRET_KEY` (different from any key that ever appeared in git) as an environment variable on every host/CI/platform secret store. Do not reuse a leaked or example value.
+
+Leave `DJANGO_DEBUG` unset or set `DJANGO_DEBUG=False` in production. Never enable debug on public hosts.
+
+Set `DJANGO_ALLOWED_HOSTS` to your real domain(s), e.g. `example.com,www.example.com`. Do not use `*`.
+
+After rotating the key:
+
+- Existing signed cookies and sessions become untrusted automatically.
+- Clear server-side sessions if you use the database/cache session backend, e.g. `python manage.py clearsessions` or delete rows in `django_session`.
+
+## Compromised key / git history
+
+If a secret key was committed publicly, treat it as permanently compromised: rotate everywhere, then scrub history (for example `git filter-repo --replace-text`) and force-push only after coordinating with collaborators. GitHub may still retain the old blobs until support/cache expiry; rotation remains mandatory.

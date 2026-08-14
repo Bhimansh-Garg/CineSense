@@ -13,20 +13,80 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def _load_dotenv(dotenv_path: Path) -> None:
+    """Load KEY=VALUE pairs from a .env file into os.environ without overriding."""
+    if not dotenv_path.is_file():
+        return
+    text = dotenv_path.read_text(encoding='utf-8-sig')
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, _, value = line.partition('=')
+        key = key.strip()
+        if not key or key in os.environ:
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
+            value = value[1:-1]
+        os.environ[key] = value
+
+
+_load_dotenv(BASE_DIR / '.env')
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    """Parse an environment variable as a boolean (not Python string truthiness)."""
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    value = raw.strip().lower()
+    if value in ('true', '1', 'yes', 'on'):
+        return True
+    if value in ('false', '0', 'no', 'off', ''):
+        return False
+    raise ImproperlyConfigured(
+        f'Invalid boolean for {name}={raw!r}. Use True or False.'
+    )
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-w4iig_@8fg6$+2e6--e^+cb%u0+@6snu+%@^7om^)!oan#jnrd'
+# Loaded from DJANGO_SECRET_KEY (environment or local .env). No insecure fallback.
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise ImproperlyConfigured(
+        'DJANGO_SECRET_KEY is not set. Set it in the environment or in a local '
+        '.env file (see .env.example). This value is required in all environments.'
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Default False when DJANGO_DEBUG is unset. Local .env may set DJANGO_DEBUG=True.
+DEBUG = _env_bool('DJANGO_DEBUG', default=False)
 
-ALLOWED_HOSTS = []
+_DEFAULT_ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+
+def _env_allowed_hosts(name: str = 'DJANGO_ALLOWED_HOSTS') -> list[str]:
+    """Parse a comma-separated host list; default to local development hosts when unset."""
+    raw = os.environ.get(name)
+    if raw is None:
+        return list(_DEFAULT_ALLOWED_HOSTS)
+    hosts = [host.strip() for host in raw.split(',') if host.strip()]
+    if not hosts:
+        return list(_DEFAULT_ALLOWED_HOSTS)
+    return hosts
+
+
+ALLOWED_HOSTS = _env_allowed_hosts()
 
 
 # Application definition
