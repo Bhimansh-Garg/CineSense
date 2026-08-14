@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect
 from .models import Review
 from .forms import ReviewForm, UserRegistrationForm
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
+from django.views.decorators.http import require_GET
 from django.conf import settings
 import pickle
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -13,9 +14,19 @@ import os
 
 def index(request):
     return render(request,'index.html')
+
+@login_required
 def review_list(request):
-  reviews = Review.objects.all().order_by('-created_at')
-  return render(request,'review_list.html',{'reviews' : reviews})
+    reviews = Review.objects.all()
+
+    # Handle search query
+    query = request.GET.get('q')
+    if query:
+        # Case-insensitive search
+        reviews = reviews.filter(movie_name__icontains=query)
+        return render(request, 'review_search.html', {'reviews': reviews, 'query': query})
+
+    return render(request, 'review_list.html', {'reviews': reviews})
 
 @login_required
 def review_create(request):
@@ -43,6 +54,8 @@ def review_edit(request,review_id):
     else:
         form = ReviewForm(instance=review)
     return render(request, 'review_form.html', {'form':form})
+
+@login_required
 def review_delete(request, review_id):
     review = get_object_or_404(Review, pk=review_id, user=request.user)
     if request.method=='POST':
@@ -65,9 +78,24 @@ def load_model():
 load_model()
 
 
+def get_review_visible_to_user_or_404(user, review_id):
+    """Return a review the user is allowed to view, or 404.
+
+    Access model (from list/search UI and Review model):
+    - Reviews are community-visible; there is no private/hidden flag.
+    - Any authenticated user may view and analyze any existing review.
+    - Ownership is enforced only for edit/delete, not for analysis.
+    """
+    if not user.is_authenticated:
+        raise Http404('Authentication required to view reviews.')
+    return get_object_or_404(Review, pk=review_id)
+
+
 @login_required
+@require_GET
 def review_analyse(request, review_id):
-    review = get_object_or_404(Review, id=review_id)
+    # Analyze any review the user may view (all reviews, once authenticated).
+    review = get_review_visible_to_user_or_404(request.user, review_id)
     review_text = review.text
 
     try:
@@ -98,25 +126,11 @@ def register(request):
     if request.method=="POST":
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password1'])
-            user.save()
+            # UserCreationForm.save() hashes password1; do not call set_password again.
+            user = form.save()
             login(request, user)
             return redirect('review_list')
     else:
         form = UserRegistrationForm()
 
     return render(request, 'registration/register.html', {'form':form})
-
-@login_required
-def review_list(request):
-    reviews = Review.objects.all()
-    
-    # Handle search query
-    query = request.GET.get('q')
-    if query:
-        # Case-insensitive search
-        reviews = reviews.filter(movie_name__icontains=query)
-        return render(request, 'review_search.html', {'reviews': reviews, 'query': query})
-    
-    return render(request, 'review_list.html', {'reviews': reviews})
