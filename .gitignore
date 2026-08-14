@@ -19,3 +19,7 @@ venv/
 .verify-venv/
 .ci-smoke-venv/
 **/media/
+
+# Legacy loose ML copies at package root (canonical artifacts live under review/models/)
+Cinesense-main/model.pkl
+Cinesense-main/tokenizer.pkl

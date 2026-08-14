@@ -1,5 +1,10 @@
 asgiref==3.8.1
 Django==5.1.2
+django-ratelimit==4.1.0
 pillow==10.4.0
 sqlparse==0.5.1
 tzdata==2024.2
+# Runtime / ML (review_analyse + retrain notebook/script)
+tensorflow==2.19.1
+pandas==3.0.5
+scikit-learn==1.9.0
