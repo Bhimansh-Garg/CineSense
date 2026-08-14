@@ -1,0 +1,16 @@
+# Runtime dependencies for the Django app (including sentiment inference).
+# Python 3.11–3.12 recommended (CI uses 3.12).
+# TensorFlow CPU wheels from PyPI are sufficient (no GPU package required).
+#
+# Install:
+#   pip install -r requirements.txt
+# For model retraining / main.ipynb, also install:
+#   pip install -r requirements-train.txt
+
+Django==5.1.2
+django-ratelimit==4.1.0
+pillow==10.4.0
+tzdata==2024.2
+
+# Must match cinesense/review/models/model_version.json → training.tensorflow_version
+tensorflow==2.19.1

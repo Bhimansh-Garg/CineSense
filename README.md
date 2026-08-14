@@ -1,10 +1,27 @@
 # CineSense
 
+## Dependencies
+
+Python **3.11–3.12** (CI uses 3.12). From the `Cinesense-main` package directory:
+
+```bash
+python -m venv venv
+# Windows: venv\Scripts\activate
+# macOS/Linux: source venv/bin/activate
+pip install -r requirements.txt
+```
+
+- `requirements.txt` — runtime (Django app + TensorFlow CPU for sentiment inference)
+- `requirements-train.txt` — runtime plus training/notebook deps (`pandas`, `scikit-learn`) for `main.ipynb` / `retrain_oov_artifacts.py`
+- `requirements-ci.txt` — lean Django + flake8 stack used by GitHub Actions (TensorFlow omitted; ML is mocked)
+
+Pinned TensorFlow **2.19.1** matches `cinesense/review/models/model_version.json`. NumPy is pulled in transitively by TensorFlow (constrained to `>=1.26,<2.2`).
+
 ## Setup (secrets)
 
 Django requires `DJANGO_SECRET_KEY` in every environment. It is never committed.
 
-1. From the `cinesense` app directory:
+1. From the `cinesense` app directory (`Cinesense-main/cinesense`):
 
 ```bash
 python bootstrap_env.py
