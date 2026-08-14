@@ -12,6 +12,7 @@ from django.utils.decorators import method_decorator
 from django.conf import settings
 from django_ratelimit.decorators import ratelimit
 import logging
+import time
 
 from .ml_artifacts import ArtifactIntegrityError, load_paired_artifacts
 
@@ -136,10 +137,13 @@ def load_model():
     global model, tokenizer, pad_sequences, artifact_manifest
     if model is not None and tokenizer is not None and pad_sequences is not None:
         return
+    started = time.perf_counter()
     model, tokenizer, pad_sequences, artifact_manifest = load_paired_artifacts()
+    load_ms = (time.perf_counter() - started) * 1000.0
     logger.info(
-        'Sentiment artifacts ready version_id=%s',
+        'Sentiment artifacts ready version_id=%s load_ms=%.1f',
         (artifact_manifest or {}).get('version_id'),
+        load_ms,
     )
 
 
@@ -204,10 +208,16 @@ def review_analyse(request, review_id):
     # Analyze any review the user may view (all reviews, once authenticated).
     # Rate limit is per authenticated user (key='user'); @login_required runs first.
     # Browser navigation endpoint: always return HTML (success or error).
+    # Logs use review_id only — never review text, passwords, or secrets.
     review = get_review_visible_to_user_or_404(request.user, review_id)
 
     try:
         if review.has_valid_sentiment_cache():
+            logger.info(
+                'Sentiment cache hit review_id=%s sentiment=%s',
+                review_id,
+                review.sentiment_label,
+            )
             context = _sentiment_result_context(
                 review,
                 review.sentiment_label,
@@ -218,12 +228,15 @@ def review_analyse(request, review_id):
         load_model()
         sequence = tokenizer.texts_to_sequences([review.text])
         padded_sequence = pad_sequences(sequence, maxlen=200)
+        predict_started = time.perf_counter()
         sentiment_prediction = model.predict(padded_sequence)
+        predict_ms = (time.perf_counter() - predict_started) * 1000.0
         prediction_score = extract_positive_probability(sentiment_prediction)
         if prediction_score is None:
             logger.error(
-                'Invalid sentiment prediction for review_id=%s',
+                'Invalid sentiment prediction for review_id=%s predict_ms=%.1f',
                 review_id,
+                predict_ms,
             )
             return _render_analyse_error(
                 request,
@@ -235,14 +248,19 @@ def review_analyse(request, review_id):
 
         sentiment = "positive" if prediction_score > 0.5 else "negative"
         review.store_sentiment_cache(sentiment, prediction_score)
+        logger.info(
+            'Sentiment inference ok review_id=%s sentiment=%s predict_ms=%.1f',
+            review_id,
+            sentiment,
+            predict_ms,
+        )
         context = _sentiment_result_context(review, sentiment, prediction_score)
         return render(request, 'review_analysis_result.html', context)
 
-    except FileNotFoundError as exc:
+    except FileNotFoundError:
         logger.error(
-            'Missing sentiment artifacts for review_id=%s: %s',
+            'Missing sentiment artifacts for review_id=%s',
             review_id,
-            exc,
         )
         return _render_analyse_error(
             request,
@@ -252,8 +270,11 @@ def review_analyse(request, review_id):
             status=500,
         )
 
-    except ArtifactIntegrityError as exc:
-        logger.error('Sentiment artifact integrity error: %s', exc)
+    except ArtifactIntegrityError:
+        logger.error(
+            'Sentiment artifact integrity error for review_id=%s',
+            review_id,
+        )
         return _render_analyse_error(
             request,
             review,

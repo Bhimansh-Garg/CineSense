@@ -198,3 +198,33 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 RATELIMIT_ENABLE = True
 REVIEW_ANALYSE_RATELIMIT = '30/h'
 LOGIN_RATELIMIT = '5/m'
+
+# Lightweight console logging for ML inference instrumentation (stdlib only).
+# Do not attach request-wide middleware logging here.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '[{levelname}] {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'review': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

@@ -4,6 +4,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+from .image_utils import optimize_review_photo
+
 
 class Review(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -55,3 +57,36 @@ class Review(models.Model):
                 'sentiment_text_hash',
             ]
         )
+
+    def _photo_was_replaced(self) -> bool:
+        """True when this save carries a new/replaced photo file."""
+        if not self.photo:
+            return False
+        if not self.pk:
+            return True
+        previous_name = (
+            type(self)
+            .objects.filter(pk=self.pk)
+            .values_list('photo', flat=True)
+            .first()
+        )
+        if previous_name is None:
+            return True
+        return previous_name != self.photo.name
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get('update_fields')
+        # Sentiment-cache and other partial saves must not touch the image.
+        should_consider_photo = update_fields is None or 'photo' in update_fields
+        if (
+            should_consider_photo
+            and self._photo_was_replaced()
+            and not getattr(self, '_photo_optimization_done', False)
+        ):
+            optimized = optimize_review_photo(self.photo)
+            if optimized is not None:
+                # Assign in-memory content; a single super().save() persists it.
+                self.photo = optimized
+            self._photo_optimization_done = True
+
+        super().save(*args, **kwargs)

@@ -256,6 +256,104 @@ class ReviewAnalyseBehaviorTests(TestCase):
         self.assertNotEqual(response.get('Content-Type', ''), 'application/json')
 
 
+class ReviewAnalyseLoggingTests(TestCase):
+    """Inference logging uses review_id + timing; never review text or secrets."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='loguser', password='SecretPass999!')
+        photo = SimpleUploadedFile('t.png', _TINY_PNG, content_type='image/png')
+        self.private_phrase = 'UNIQUE_PRIVATE_REVIEW_TEXT_DO_NOT_LOG'
+        self.review = Review.objects.create(
+            user=self.user,
+            text=self.private_phrase,
+            movie_name='Logging Movie',
+            photo=photo,
+        )
+        self.url = reverse('review_analyse', args=[self.review.pk])
+        self.client.login(username='loguser', password='SecretPass999!')
+
+    def _joined_logs(self, capture):
+        return '\n'.join(capture.output)
+
+    def test_successful_analysis_logs_inference_timing(self):
+        with self.assertLogs('review.views', level='INFO') as captured:
+            with mock_sentiment(predict_return=[[0.88]]):
+                response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        joined = self._joined_logs(captured)
+        self.assertIn(f'review_id={self.review.pk}', joined)
+        self.assertIn('Sentiment inference ok', joined)
+        self.assertIn('sentiment=positive', joined)
+        self.assertIn('predict_ms=', joined)
+        self.assertNotIn(self.private_phrase, joined)
+        self.assertNotIn('SecretPass999!', joined)
+        session_key = self.client.session.session_key
+        if session_key:
+            self.assertNotIn(session_key, joined)
+
+    def test_cache_hit_logs_without_inference(self):
+        with mock_sentiment(predict_return=[[0.9]]):
+            self.assertEqual(self.client.get(self.url).status_code, 200)
+        with self.assertLogs('review.views', level='INFO') as captured:
+            with mock_sentiment(predict_return=[[0.1]]):
+                response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'positive')
+        joined = self._joined_logs(captured)
+        self.assertIn('Sentiment cache hit', joined)
+        self.assertIn(f'review_id={self.review.pk}', joined)
+        self.assertNotIn('Sentiment inference ok', joined)
+        self.assertNotIn(self.private_phrase, joined)
+
+    def test_inference_exception_logs_error_without_secrets(self):
+        with self.assertLogs('review.views', level='ERROR') as captured:
+            with mock_sentiment(
+                predict_side_effect=RuntimeError('secret inference internals')
+            ):
+                response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 500)
+        joined = self._joined_logs(captured)
+        self.assertIn('Unexpected sentiment analysis failure', joined)
+        self.assertIn(f'review_id={self.review.pk}', joined)
+        self.assertNotIn(self.private_phrase, joined)
+        self.assertNotIn('SecretPass999!', joined)
+        from django.conf import settings
+
+        self.assertNotIn(settings.SECRET_KEY, joined)
+
+    def test_missing_artifacts_log_omits_filesystem_path(self):
+        with self.assertLogs('review.views', level='ERROR') as captured:
+            with patch(
+                'review.views.load_model',
+                side_effect=FileNotFoundError('/secret/path/model.keras'),
+            ):
+                response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 500)
+        joined = self._joined_logs(captured)
+        self.assertIn('Missing sentiment artifacts', joined)
+        self.assertIn(f'review_id={self.review.pk}', joined)
+        self.assertNotIn('/secret/path', joined)
+        self.assertNotIn('model.keras', joined)
+        self.assertNotIn(self.private_phrase, joined)
+
+    def test_artifact_integrity_log_omits_exception_detail(self):
+        from review.ml_artifacts import ArtifactIntegrityError
+
+        with self.assertLogs('review.views', level='ERROR') as captured:
+            with patch(
+                'review.views.load_model',
+                side_effect=ArtifactIntegrityError('checksum mismatch /secret'),
+            ):
+                response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 500)
+        joined = self._joined_logs(captured)
+        self.assertIn('Sentiment artifact integrity error', joined)
+        self.assertIn(f'review_id={self.review.pk}', joined)
+        self.assertNotIn('checksum', joined)
+        self.assertNotIn('/secret', joined)
+
+
 class ReviewEditAuthorizationTests(TestCase):
     """Edit requires login and ownership."""
 
@@ -1159,3 +1257,190 @@ class ReviewSearchBehaviorTests(TestCase):
             len(normalize_review_search_query(long)),
             REVIEW_SEARCH_QUERY_MAX_LEN,
         )
+
+
+class ReviewPhotoOptimizationTests(TestCase):
+    """Review.photo is resized on upload only; text-only saves leave it alone."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='photouser', password='pass12345')
+        self.client = Client()
+        self.client.login(username='photouser', password='pass12345')
+
+    def _rgb_upload(self, width, height, name='shot.jpg', fmt='JPEG'):
+        from io import BytesIO
+
+        from PIL import Image
+
+        buffer = BytesIO()
+        image = Image.new('RGB', (width, height), color=(20, 120, 200))
+        save_kwargs = {'format': fmt}
+        if fmt == 'JPEG':
+            save_kwargs['quality'] = 95
+        image.save(buffer, **save_kwargs)
+        buffer.seek(0)
+        content_type = 'image/jpeg' if fmt == 'JPEG' else f'image/{fmt.lower()}'
+        return SimpleUploadedFile(name, buffer.read(), content_type=content_type)
+
+    def _png_rgba_upload(self, width, height, name='alpha.png'):
+        from io import BytesIO
+
+        from PIL import Image
+
+        buffer = BytesIO()
+        image = Image.new('RGBA', (width, height), color=(255, 0, 0, 128))
+        image.save(buffer, format='PNG')
+        buffer.seek(0)
+        return SimpleUploadedFile(name, buffer.read(), content_type='image/png')
+
+    def _open_stored(self, review):
+        from PIL import Image
+
+        review.photo.open('rb')
+        try:
+            with Image.open(review.photo) as image:
+                image.load()
+                return image.copy()
+        finally:
+            review.photo.close()
+
+    def test_upload_normal_image_keeps_dimensions(self):
+        from review.image_utils import PHOTO_MAX_EDGE
+
+        upload = self._rgb_upload(640, 480, name='normal.jpg')
+        review = Review.objects.create(
+            user=self.user,
+            text='Normal sized photo review.',
+            movie_name='Normal',
+            photo=upload,
+        )
+        stored = self._open_stored(review)
+        self.assertEqual(stored.size, (640, 480))
+        self.assertLessEqual(max(stored.size), PHOTO_MAX_EDGE)
+
+    def test_upload_oversized_image_is_resized_preserving_aspect(self):
+        from review.image_utils import PHOTO_MAX_EDGE
+
+        upload = self._rgb_upload(4000, 2000, name='huge.jpg')
+        review = Review.objects.create(
+            user=self.user,
+            text='Oversized photo review.',
+            movie_name='Huge',
+            photo=upload,
+        )
+        stored = self._open_stored(review)
+        width, height = stored.size
+        self.assertEqual(max(width, height), PHOTO_MAX_EDGE)
+        self.assertEqual(width, PHOTO_MAX_EDGE)
+        self.assertEqual(height, PHOTO_MAX_EDGE // 2)
+
+    def test_upload_exif_orientation_is_applied_before_resize(self):
+        from io import BytesIO
+
+        from PIL import Image
+        from review.image_utils import PHOTO_MAX_EDGE
+
+        # Wide image tagged as Orientation=6 (rotate 90 CW) → tall after transpose.
+        buffer = BytesIO()
+        image = Image.new('RGB', (2000, 1000), color=(10, 20, 30))
+        exif = image.getexif()
+        exif[274] = 6
+        image.save(buffer, format='JPEG', quality=95, exif=exif)
+        buffer.seek(0)
+        upload = SimpleUploadedFile(
+            'oriented.jpg', buffer.read(), content_type='image/jpeg'
+        )
+        review = Review.objects.create(
+            user=self.user,
+            text='Oriented photo review.',
+            movie_name='Orient',
+            photo=upload,
+        )
+        stored = self._open_stored(review)
+        width, height = stored.size
+        self.assertEqual(max(width, height), PHOTO_MAX_EDGE)
+        # After orientation, portrait (1000x2000) scales to 600x1200.
+        self.assertEqual(width, PHOTO_MAX_EDGE // 2)
+        self.assertEqual(height, PHOTO_MAX_EDGE)
+
+    def test_update_without_replacing_photo_does_not_reprocess(self):
+        upload = self._rgb_upload(800, 600, name='keep.jpg')
+        review = Review.objects.create(
+            user=self.user,
+            text='Original text.',
+            movie_name='Keep',
+            photo=upload,
+        )
+        original_name = review.photo.name
+        with patch('review.models.optimize_review_photo') as optimize_mock:
+            review.text = 'Updated text only.'
+            review.save()
+            optimize_mock.assert_not_called()
+        review.refresh_from_db()
+        self.assertEqual(review.photo.name, original_name)
+        self.assertEqual(review.text, 'Updated text only.')
+        stored = self._open_stored(review)
+        self.assertEqual(stored.size, (800, 600))
+
+    def test_sentiment_cache_save_skips_photo_processing(self):
+        upload = self._rgb_upload(500, 500, name='cache.jpg')
+        review = Review.objects.create(
+            user=self.user,
+            text='Cache photo review.',
+            movie_name='Cache',
+            photo=upload,
+        )
+        with patch('review.models.optimize_review_photo') as optimize_mock:
+            review.store_sentiment_cache('positive', 0.91)
+            optimize_mock.assert_not_called()
+
+    def test_invalid_image_rejected_by_form(self):
+        from review.forms import ReviewForm
+
+        form = ReviewForm(
+            data={'text': 'Bad photo', 'movie_name': 'Bad'},
+            files={
+                'photo': SimpleUploadedFile(
+                    'nope.jpg', b'not-an-image', content_type='image/jpeg'
+                )
+            },
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('photo', form.errors)
+
+    def test_png_transparency_preserved_when_resized(self):
+        from review.image_utils import PHOTO_MAX_EDGE
+
+        upload = self._png_rgba_upload(1800, 1800, name='glass.png')
+        review = Review.objects.create(
+            user=self.user,
+            text='Transparent PNG review.',
+            movie_name='PNG',
+            photo=upload,
+        )
+        stored = self._open_stored(review)
+        self.assertTrue(review.photo.name.lower().endswith('.png'))
+        self.assertEqual(stored.mode, 'RGBA')
+        self.assertEqual(max(stored.size), PHOTO_MAX_EDGE)
+        pixel = stored.getpixel((0, 0))
+        self.assertEqual(len(pixel), 4)
+        self.assertLess(pixel[3], 255)
+
+    def test_create_via_form_upload_is_displayable(self):
+        from review.image_utils import PHOTO_MAX_EDGE
+
+        url = reverse('review_create')
+        response = self.client.post(
+            url,
+            {
+                'text': 'Form upload review.',
+                'movie_name': 'FormMovie',
+                'photo': self._rgb_upload(2500, 1000, name='form.jpg'),
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        review = Review.objects.get(user=self.user, movie_name='FormMovie')
+        stored = self._open_stored(review)
+        self.assertEqual(max(stored.size), PHOTO_MAX_EDGE)
+        self.assertTrue(review.photo.url)
+        self.assertTrue(review.photo.storage.exists(review.photo.name))
