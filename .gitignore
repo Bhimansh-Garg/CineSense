@@ -1,25 +1,65 @@
-# Local environment / secrets — never commit real keys
+# --- Secrets / local configuration ---
+# Never commit real keys. Keep the tracked template.
 .env
 **/.env
-!.env.example
+.env.*
+!**/.env.example
 
-# Python bytecode (can embed previously hardcoded secrets)
+# --- Python bytecode ---
 __pycache__/
 **/__pycache__/
 *.py[cod]
+*$py.class
 
-# Local SQLite DB (sessions/cookies after key rotation)
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+.verify-venv/
+.ci-smoke-venv/
+.deps-verify-venv/
+
+# --- Django / local runtime ---
+# SQLite is local-only (not tracked). Do not commit DB copies.
 *.sqlite3
 db.sqlite3
 **/db.sqlite3
 
-# Local virtualenvs and uploaded/test media
-.venv/
-venv/
-.verify-venv/
-.ci-smoke-venv/
+# User uploads (MEDIA_ROOT). Note: some demo media files were committed
+# historically and remain tracked until deliberately removed from the index.
 **/media/
 
-# Legacy loose ML copies at package root (canonical artifacts live under review/models/)
+# --- Test / coverage ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+
+# --- Packaging / type checkers ---
+*.egg-info/
+.eggs/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+dmypy.json
+
+# --- IDE / OS ---
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+*.log
+
+# --- Legacy loose ML copies at package root ---
+# Canonical artifacts live under review/models/ (those stay tracked).
 Cinesense-main/model.pkl
 Cinesense-main/tokenizer.pkl
