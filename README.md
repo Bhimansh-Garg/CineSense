@@ -38,6 +38,25 @@ After rotating the key:
 - Existing signed cookies and sessions become untrusted automatically.
 - Clear server-side sessions if you use the database/cache session backend, e.g. `python manage.py clearsessions` or delete rows in `django_session`.
 
+## Database and search scalability
+
+**Current database:** SQLite (`django.db.backends.sqlite3`, file `db.sqlite3`). This is what local development, CI, and the checked-in settings use.
+
+**Production database:** Not configured separately. There is no PostgreSQL (or other) engine in settings/requirements today; SQLite is the intended deployment database unless/until you deliberately migrate.
+
+**Review search:** `review_list` filters with `movie_name__icontains`. On SQLite that becomes a case-insensitive `LIKE '%query%'` and generally **cannot use a normal B-tree index** (leading wildcard). Pagination (12 per page) limits how much is rendered, but the matching scan still grows with the `Review` table.
+
+**What we do not do on SQLite:** add a plain `db_index` / migration that only pretends to fix `icontains`, or introduce PostgreSQL-only `pg_trgm` / `GinIndex` while the project remains SQLite-only.
+
+**Safe current mitigations:** strip/bound the search string, keep pagination, and document this limit.
+
+**Deferred production work (when moving to PostgreSQL):**
+
+1. Point `DATABASES` at PostgreSQL and add a driver (e.g. `psycopg`).
+2. Enable the `pg_trgm` extension.
+3. Add a trigram/`GinIndex` (or equivalent) migration for `movie_name` so substring search can scale.
+4. Keep the same `icontains` API in Django so templates/URLs stay unchanged.
+
 ## Compromised key / git history
 
 If a secret key was committed publicly, treat it as permanently compromised: rotate everywhere, then scrub history (for example `git filter-repo --replace-text`) and force-push only after coordinating with collaborators. GitHub may still retain the old blobs until support/cache expiry; rotation remains mandatory.

@@ -31,6 +31,19 @@ Movie review
     {% endfor %}
 
 </div>
+{% if page_obj.paginator.count %}
+<nav class="pagination-nav text-center text-white mt-4 mb-4" aria-label="Review pages">
+  {% if page_obj.has_previous %}
+  <a class="btn neon-btn-info"
+     href="?page={{ page_obj.previous_page_number }}{% if query %}&amp;q={{ query|urlencode }}{% endif %}">Previous</a>
+  {% endif %}
+  <span class="mx-3">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+  <a class="btn neon-btn-info"
+     href="?page={{ page_obj.next_page_number }}{% if query %}&amp;q={{ query|urlencode }}{% endif %}">Next</a>
+  {% endif %}
+</nav>
+{% endif %}
 <style>
   {% comment %} body {
       background-color: #FFD700; /* Golden-yellow background */

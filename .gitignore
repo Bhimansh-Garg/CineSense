@@ -12,3 +12,10 @@ __pycache__/
 *.sqlite3
 db.sqlite3
 **/db.sqlite3
+
+# Local virtualenvs and uploaded/test media
+.venv/
+venv/
+.verify-venv/
+.ci-smoke-venv/
+**/media/

@@ -1,0 +1,9 @@
+# CI / test dependencies — pinned to match requirement.txt Django stack.
+# Omits TensorFlow and training stack so unit tests stay fast (ML is mocked).
+asgiref==3.8.1
+Django==5.1.2
+django-ratelimit==4.1.0
+pillow==10.4.0
+sqlparse==0.5.1
+tzdata==2024.2
+flake8==7.1.1

@@ -1,12 +1,16 @@
-"""Retrain IMDB sentiment model with OOV tokenizer; write paired artifacts.
+"""Retrain IMDB sentiment model; write paired Keras + tokenizer + version manifest.
 
-Mirrors main.ipynb training. Deploy model.pkl and tokenizer.pkl together only.
+Mirrors main.ipynb training. Deploy as one unit:
+  cinesense/review/models/sentiment_model.keras
+  cinesense/review/models/tokenizer.json
+  cinesense/review/models/model_version.json
+
 Tokenizer config: num_words=5000, oov_token='<OOV>'
+The Keras model is saved with model.save(...keras), never pickle.
 """
 from __future__ import annotations
 
 import os
-import pickle
 import sys
 
 import pandas as pd
@@ -17,13 +21,22 @@ from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.preprocessing.text import Tokenizer
 
+# Allow importing review.ml_artifacts when run from repo package root.
+APP_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cinesense")
+if APP_DIR not in sys.path:
+    sys.path.insert(0, APP_DIR)
+
+from review.ml_artifacts import (  # noqa: E402
+    MAXLEN,
+    NUM_WORDS,
+    OOV_TOKEN,
+    save_paired_artifacts,
+)
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(ROOT, "imdb-dataset-of-50k-movie-reviews", "IMDB Dataset.csv")
 ARTIFACT_DIR = os.path.join(ROOT, "cinesense", "review", "models")
 
-NUM_WORDS = 5000
-OOV_TOKEN = "<OOV>"
-MAXLEN = 200
 EPOCHS = 15
 BATCH_SIZE = 64
 RANDOM_STATE = 42
@@ -63,7 +76,10 @@ def main() -> int:
     model.build(input_shape=(None, MAXLEN))
     model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
 
-    print("Training with EarlyStopping(monitor='val_loss', patience=2, restore_best_weights=True)...")
+    print(
+        "Training with EarlyStopping(monitor='val_loss', patience=2, "
+        "restore_best_weights=True)..."
+    )
     early_stopping = EarlyStopping(
         monitor="val_loss",
         patience=EARLY_STOPPING_PATIENCE,
@@ -86,21 +102,17 @@ def main() -> int:
     loss, accuracy = model.evaluate(X_test, Y_test, verbose=0)
     print(f"Test loss: {loss} Test accuracy: {accuracy}")
 
-    os.makedirs(ARTIFACT_DIR, exist_ok=True)
-    model_path = os.path.join(ARTIFACT_DIR, "model.pkl")
-    tokenizer_path = os.path.join(ARTIFACT_DIR, "tokenizer.pkl")
-    with open(model_path, "wb") as f:
-        pickle.dump(model, f)
-    with open(tokenizer_path, "wb") as f:
-        pickle.dump(tokenizer, f)
-
-    # Notebook-local copies (same run)
-    with open(os.path.join(ROOT, "model.pkl"), "wb") as f:
-        pickle.dump(model, f)
-    with open(os.path.join(ROOT, "tokenizer.pkl"), "wb") as f:
-        pickle.dump(tokenizer, f)
-
-    print(f"Saved paired artifacts:\n  {model_path}\n  {tokenizer_path}")
+    saved = save_paired_artifacts(
+        model,
+        tokenizer,
+        ARTIFACT_DIR,
+        also_write_legacy_pickles=False,
+        extra={"source": "retrain_oov_artifacts.py"},
+    )
+    print("Saved paired artifacts (deploy as one unit):")
+    for key in ("model", "tokenizer", "version"):
+        print(f"  {saved[key]}")
+    print(f"version_id={saved['version_id']}")
     print(f"oov_token={tokenizer.oov_token!r} index={tokenizer.word_index.get(OOV_TOKEN)}")
     return 0
 

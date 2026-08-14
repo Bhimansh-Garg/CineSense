@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+{% block title %}
+Movie Review Analysis Error
+{% endblock %}
+
+{% block content %}
+<h1 class="text-center glowing-title mt-4">"A PICTURE IS WORTH A THOUSAND WORDS"</h1>
+
+<div class="card neon-card mb-4">
+    <div class="card-body">
+        <h5 class="glowing-card-title">Analysis unavailable</h5>
+        {% if review %}
+        <p class="card-text glowing-username">Reviewed by: {{ review.user.username }}</p>
+        <p class="card-text glowing-text">{{ review.text }}</p>
+        {% endif %}
+        <p class="card-text glowing-error">{{ error_message }}</p>
+    </div>
+</div>
+<div class="text-center mb-4">
+  <a href="{% url 'review_list' %}" class="btn neon-button">Go Back to Reviews</a>
+</div>
+<style>
+    body {
+        background-color: #111;
+        color: #FFED28;
+        font-family: 'Arial', sans-serif;
+    }
+    .glowing-title {
+        color: #FFED28;
+        text-shadow: 0 0 10px #FFED28, 0 0 20px #FFED28, 0 0 30px #FFC107, 0 0 40px #FFC107;
+        font-size: 3rem;
+        font-weight: bold;
+    }
+    .neon-card {
+        background-color: rgba(0, 0, 0, 0.7);
+        border: 2px solid #FFED28;
+        border-radius: 15px;
+        box-shadow: 0 0 20px #FFED28, 0 0 40px #FFC107;
+    }
+    .glowing-card-title {
+        color: #FFED28;
+        font-size: 1.8rem;
+        text-shadow: 0 0 10px #FFED28, 0 0 20px #FFED28;
+    }
+    .glowing-text {
+        font-size: 1.2rem;
+        color: #FFF;
+        text-shadow: 0 0 5px #FFF, 0 0 10px #FFED28;
+        margin-bottom: 1rem;
+    }
+    .glowing-username {
+        font-size: 1.1rem;
+        color: #FFED28;
+        text-shadow: 0 0 5px #FFED28, 0 0 10px #FFC107;
+        margin-bottom: 1rem;
+    }
+    .glowing-error {
+        font-size: 1.3rem;
+        color: #FF6B6B;
+        text-shadow: 0 0 5px #FF6B6B, 0 0 10px #FF4500;
+        font-weight: bold;
+    }
+    .neon-button {
+      padding: 10px 20px;
+      border-radius: 5px;
+      background-color: transparent;
+      color: #FFED28;
+      text-shadow: 0 0 10px #FFED28, 0 0 20px #FFC107;
+      text-transform: uppercase;
+      font-size: 1rem;
+      font-weight: bold;
+      box-shadow: 0 0 10px #FFED28, 0 0 20px #FFC107;
+      transition: 0.3s;
+      text-decoration: none;
+  }
+  .neon-button:hover {
+      background-color: #FFC107;
+      box-shadow: 0 0 20px #FFC107, 0 0 30px #FFED28;
+  }
+</style>
+{% endblock %}

@@ -9,7 +9,6 @@ Search Results for "{{ query }}"
 <a class="btn neon-btn-info mb-4" href="{% url 'review_create'%}">Create a review</a>
 
 <div class="container row gap-3">
-    {% if reviews %}
     {% for review in reviews %}
     <div class="card neon-card" style="width: 18rem;">
         <img src="{{review.photo.url}}" class="card-img-top" alt="...">
@@ -25,11 +24,24 @@ Search Results for "{{ query }}"
           {% endif %}
         </div>
     </div>
-    {% endfor %}
-    {% else %}
+    {% empty %}
     <p class="text-center text-white">No results found for "{{ query }}".</p>
-    {% endif %}
+    {% endfor %}
 </div>
+
+{% if page_obj.paginator.count %}
+<nav class="pagination-nav text-center text-white mt-4 mb-4" aria-label="Search result pages">
+  {% if page_obj.has_previous %}
+  <a class="btn neon-btn-info"
+     href="?page={{ page_obj.previous_page_number }}&amp;q={{ query|urlencode }}">Previous</a>
+  {% endif %}
+  <span class="mx-3">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+  <a class="btn neon-btn-info"
+     href="?page={{ page_obj.next_page_number }}&amp;q={{ query|urlencode }}">Next</a>
+  {% endif %}
+</nav>
+{% endif %}
 
 <style>
     .card{

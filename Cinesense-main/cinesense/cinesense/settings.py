@@ -192,3 +192,9 @@ LOGIN_REDIRECT_URL = '/review'
 LOGOUT_REDIRECT_URL = '/review'
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+# django-ratelimit (uses Django's default LocMemCache unless CACHES is overridden).
+# Multi-process production should use a shared cache backend (e.g. Redis/Memcached).
+RATELIMIT_ENABLE = True
+REVIEW_ANALYSE_RATELIMIT = '30/h'
+LOGIN_RATELIMIT = '5/m'

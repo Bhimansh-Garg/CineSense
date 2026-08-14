@@ -1,5 +1,7 @@
 import pickle
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+
 def tokenize(review_text):
     with open('tokenizer.pkl', 'rb') as file:
         tokenizer = pickle.load(file)

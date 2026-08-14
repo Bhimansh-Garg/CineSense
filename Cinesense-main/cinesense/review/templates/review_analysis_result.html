@@ -17,7 +17,9 @@ Movie Review Analysis
             <h5 class="glowing-card-title">Review Sentiment</h5>
             <p class="card-text glowing-username">Reviewed by: {{ review.user.username }}</p>
             <p class="card-text glowing-text">{{ review.text }}</p>
-            <p class="card-text glowing-sentiment" style="color: {{ sentiment_color }};">Sentiment: {{ sentiment }}</p>
+            <p class="card-text glowing-sentiment" style="color: {{ sentiment_color }};">
+                Sentiment: {{ sentiment }} — {{ prediction_percent }}% positive probability
+            </p>
             <p class="card-text last-updated-text">Last updated 3 mins ago</p>
         </div>
     </div>
